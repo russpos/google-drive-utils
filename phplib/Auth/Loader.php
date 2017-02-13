@@ -11,6 +11,7 @@ class Loader {
     private $redirect_params;
 
     const AUTH_URL_BASE = "https://accounts.google.com/o/oauth2/auth?";
+    const CLI_REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
 
     /**
      * __construct
@@ -48,15 +49,21 @@ class Loader {
     public function getAuthURL() : string {
         $payload = [
             "client_id"     => $this->client_id,
-            "response_type" => "token",
             "scope"         => $this->scope->toString(),
         ];
 
         if ($this->redirect_uri) {
             $redirect = $this->redirect_uri;
-            $payload["redirect_uri"] = (empty($this->redirect_params)) ?
-                $redirect : $redirect.'?'.http_build_query($this->redirect_params);
+            // TODO: Make const
+            $payload['response_type'] = "token";
+        } else {
+            $redirect = self::CLI_REDIRECT_URI;
+            // TODO: Make const
+            $payload['response_type'] = "code";
         }
+
+        $payload["redirect_uri"] = (empty($this->redirect_params)) ?
+            $redirect : $redirect.'?'.http_build_query($this->redirect_params);
         return self::AUTH_URL_BASE.http_build_query($payload);
     }
 
