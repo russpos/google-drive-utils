@@ -1,0 +1,8 @@
+{
+    "name": "russpos/google-drive-utils",
+    "autoload": {
+        "psr-4" : {
+            "Russpos\\GoogleDriveUtils" : "phplib"
+        }
+    }
+}
