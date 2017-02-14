@@ -1,21 +1,20 @@
 <?php namespace Russpos\GoogleDriveUtils\Auth;
 
-use Russpos\GoogleDriveUtils\Sys;
-
 class CmdLoader { 
 
     private $path = null;
+    private $token_store = null;
+    private $loader;
 
-    public function __construct(string $client_id, string $client_secret, string $path, Scope $scope) {
-        $this->path = $path;
-        $this->loader = new Loader($client_id, $client_secret, $scope);
+    public function __construct(ClientData $client_data, TokenStorageInterface $token_store, Scope $scope) {
+        $this->token_store = $token_store;
+        $this->loader = new Loader($client_data, $scope);
     }
 
     public function loadToken() : Token {
-        if (file_exists($this->path)) {
-            $token_data_string = file_get_contents($this->path);
-            $token_data = json_decode($token_data_string, true);
-        } else {
+        try {
+            $token = $this->token_store->loadToken();
+        } catch (NoTokenStoredException $e) {
             $auth_url = $this->loader->getAuthURL();
             $output = <<<OUT
 In order to register your application, please go to the following URL:
@@ -25,17 +24,9 @@ In order to register your application, please go to the following URL:
 And enter the token: 
 OUT;
             $input = readline($output);
-            $token_data = [ "token" => $input ]; 
-            file_put_contents($path, json_encode($token_data_string));
+            $token = new Token($input);
+            $this->token_store->storeToken($token);
         }
-        return new Token($token_data);
+        return $token;
     }
-
-    private function getPath() {
-        if (empty($this->path)) {
-            $this->path = $_ENV['HOME'] . '/.glibs_auth_token';
-        }
-        return $this->path;
-    }
-
 }

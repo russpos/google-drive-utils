@@ -2,7 +2,7 @@
 
 class CalendarScope extends Scope {
 
-    const MANAGE    = "https://www.googleapis.com/auth/calendarManage";
+    const MANAGE    = "https://www.googleapis.com/auth/calendar";
     const READ_ONLY = "https://www.googleapis.com/auth/calendar.readonly";
 
     public static function manage() {

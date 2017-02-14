@@ -3,12 +3,14 @@
 class Loader {
 
     private $auth_token;
-    private $client_id;
-    private $client_secret;
+    private $client_data;
     private $scope;
 
-    private $redirect_uri;
+    private $with_redirect = false;
     private $redirect_params;
+
+    private $token_store = null;
+    private $loader;
 
     const AUTH_URL_BASE = "https://accounts.google.com/o/oauth2/auth?";
     const CLI_REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
@@ -16,68 +18,61 @@ class Loader {
     /**
      * __construct
      * Creates a new Auth/Loader
-     * @param string $client_id Client ID of the application you are loading authorization for
-     * @param string $client_secret Client secret of the application you are loading authorization for
+     * @param ClientData $client_data ClientData object of the application you are loading authorization for
      * @param Scope $scope The scope you are attempting to load authorization for
      * @access public
      */
-    public function __construct(string $client_id, string $client_secret, Scope $scope) {
-        $this->client_id = $client_id;
-        $this->client_secret = $client_secret;
+    public function __construct(ClientData $client_data, TokenStorageInterface $token_store, Scope $scope) {
+        $this->token_store = $token_store;
         $this->scope = $scope;
+        $this->client_data = $client_data;
     }
 
     /**
-     * withRedirectUrl
-     * Sets the redirect URL of the authorization.
-     * @param string $redirect_uri URL that should be redirected to after a successful authorization
-     * @param array $redirect_params Additional HTTP params for the redirect URL
+     * enableRedirect
+     * Sets flag so that we load auth via a redirect mechanism
      * @access public
      * @return void
      */
-    public function withRedirectUrl(string $redirect_uri, array $params = []) {
-        $this->redirect_uri = $redirect_uri;
-        $this->redirect_params = $params;
+    public function enableRedirect() {
+        $this->with_redirect = true;
     }
 
     /**
      * getAuthURL
      * Gets the auth URL for the given redirect
-     * @access public
+     * @access private
      * @return string URL as a string to send user to authorize this application
      */
-    public function getAuthURL() : string {
+    private function getAuthURL() : string {
         $payload = [
-            "client_id"     => $this->client_id,
+            "client_id"     => $this->client_data->getClientId(),
             "scope"         => $this->scope->toString(),
         ];
 
-        if ($this->redirect_uri) {
-            $redirect = $this->redirect_uri;
+        if ($this->with_redirect) {
+            $redirect = $this->client_data->getRedirectUri(1);
             // TODO: Make const
             $payload['response_type'] = "token";
         } else {
-            $redirect = self::CLI_REDIRECT_URI;
+            $redirect = $this->client_data->getRedirectUri(0);
             // TODO: Make const
             $payload['response_type'] = "code";
         }
 
         $payload["redirect_uri"] = (empty($this->redirect_params)) ?
             $redirect : $redirect.'?'.http_build_query($this->redirect_params);
-        return self::AUTH_URL_BASE.http_build_query($payload);
+        return $this->client_data->getAuthURI(). '?'. http_build_query($payload);
     }
 
-    /**
-     * getAuthToken
-     * Returns the currently loaded authorized Token
-     * @access public
-     * @return Token
-     */
-    public function getAuthToken() : Token {
-        if (empty($this->auth_token)) {
-            throw new Auth_Exception(Auth_Exception::ERROR_NO_TOKEN_LOADED);
+    public function getTokenWithInterface(UserInterface $ui) : Token {
+        try {
+            $token = $this->token_store->loadToken();
+        } catch (NoTokenStoredException $e) {
+            $token = $ui->triggerUserApplicationAuthorizationFromUrl($this->getAuthURL());
+            $this->token_store->storeToken($token);
         }
-        return $this->auth_token;
+        return $token;
     }
 
 }
