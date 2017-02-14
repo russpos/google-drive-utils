@@ -1,1 +1,3 @@
-google-api-data.php
+*.swo
+*.swp
+client_id.json
