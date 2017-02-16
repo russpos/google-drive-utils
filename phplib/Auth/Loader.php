@@ -75,10 +75,47 @@ class Loader {
         try {
             $token = $this->token_store->loadToken();
         } catch (NoTokenStoredException $e) {
-            $token = $ui->triggerUserApplicationAuthorizationFromUrl($this->getAuthURL());
+            $code = $ui->triggerUserApplicationAuthorizationFromUrl($this->getAuthURL());
+            $token = $this->exchangeCodeForToken($code);
             $this->token_store->storeToken($token);
         }
         return $token;
+    }
+
+    private function exchangeCodeForToken(AccessCode $code) : Token {
+        $url = $this->getTokenUrlForAccessCode($code);
+        $payload = $this->getTokenPayloadForAccessCode($code);
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST,           1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS,     http_build_query($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER,     ["Content-type: application/x-www-form-urlencoded"]);
+        $raw_response = curl_exec($ch);
+        $token_data_as_array = json_decode($raw_response, true);
+
+        return new Token($token_data_as_array);
+    }
+
+    private function getTokenUrlForAccessCode(AccessCode $code) : string {
+        return $this->client_data->getTokenURI();
+    }
+
+    private function getTokenPayloadForAccessCode(AccessCode $code) : array {
+        $payload = [
+            "code"       => $code->toString(),
+            "client_id"  => $this->client_data->getClientId(),
+            "scope"      => $this->scope->toString(),
+            "grant_type" => "authorization_code",
+            "client_secret" => $this->client_data->getClientSecret(),
+        ];
+
+        if ($this->with_redirect) {
+            $payload["redirect_uri"] = $this->client_data->getRedirectUri(1);
+        } else {
+            $payload["redirect_uri"] = $this->client_data->getRedirectUri(0);
+        }
+        return $payload;
     }
 
 }

@@ -10,15 +10,18 @@ class TokenFileStorage implements TokenStorageInterface {
 
     public function loadToken() : Token {
         if (file_exists($this->path)) {
-            $token_data = file_get_contents($this->path);
-            if ($token_data) {
-                return new Token($token_data);
+            $token_data_as_string = file_get_contents($this->path);
+            if ($token_data_as_string) {
+                $token_data = json_decode($token_data_as_string, true);
+                if (isset($token_data['access_token'])) {
+                    return new Token($token_data);
+                }
             }
         }
         throw new NoTokenStoredException();
     }
 
     public function storeToken(Token $token) {
-        file_put_contents($this->path, $token->getTokenString());
+        file_put_contents($this->path, json_encode($token->getTokenData()));
     }
 }

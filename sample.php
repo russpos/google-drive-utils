@@ -1,11 +1,22 @@
 <?php
 use Russpos\GoogleDriveUtils\Auth;
+use Russpos\GoogleDriveUtils\API;
 require "loader.php";
 
 $client_data    = Auth\ClientData::fromFile(__DIR__."/client_id.json");
 $file_storage   = new Auth\TokenFileStorage("/Users/russp/.gdrive");
-$command_loader = new Auth\Loader($client_data, $file_storage, Auth\CalendarScope::manage());
+$loader = new Auth\Loader($client_data, $file_storage, Auth\CalendarScope::manage());
 
 $cli = new Auth\Cli();
-$token = $command_loader->getTokenWithInterface($cli);
-echo "Token!\n"; print_r($token);
+echo ")))\n";
+$token = $loader->getTokenWithInterface($cli);
+echo "&&&";
+
+print_r($token);
+/*
+$calendar_api = new Api\Calendar($token);
+
+$calendars = $calendar_api->getCalendars();
+print_r($calendars);
+ */
+
