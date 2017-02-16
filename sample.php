@@ -8,9 +8,7 @@ $file_storage   = new Auth\TokenFileStorage("/Users/russp/.gdrive");
 $loader = new Auth\Loader($client_data, $file_storage, Auth\CalendarScope::manage());
 
 $cli = new Auth\Cli();
-echo ")))\n";
 $token = $loader->getTokenWithInterface($cli);
-echo "&&&";
 
 print_r($token);
 /*
