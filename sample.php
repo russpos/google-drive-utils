@@ -11,6 +11,7 @@ $cli = new Auth\Cli();
 $token = $loader->getTokenWithInterface($cli);
 
 print_r($token);
+$token->ensureFresh();
 /*
 $calendar_api = new Api\Calendar($token);
 

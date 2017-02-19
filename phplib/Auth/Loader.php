@@ -1,5 +1,7 @@
 <?php namespace Russpos\GoogleDriveUtils\Auth;
 
+use Russpos\GoogleDriveUtils\Util;
+
 class Loader {
 
     private $client_data;
@@ -85,15 +87,9 @@ class Loader {
     private function exchangeCodeForToken(AccessCode $code) : Token {
         $url = $this->getTokenUrlForAccessCode($code);
         $payload = $this->getTokenPayloadForAccessCode($code);
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POST,           1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS,     http_build_query($payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER,     ["Content-type: application/x-www-form-urlencoded"]);
-        $raw_response = curl_exec($ch);
-        $token_data_as_array = json_decode($raw_response, true);
-
+        $request = Util\Request::post($url, $payload);
+        $response = $request->exec();
+        $token_data_as_array = $response->getJSONBody();
         return new Token($token_data_as_array);
     }
 
