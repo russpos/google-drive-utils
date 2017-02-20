@@ -75,7 +75,7 @@ class Loader {
      */
     public function getTokenWithInterface(UserInterface $ui) : Token {
         try {
-            $token = $this->token_store->loadToken();
+            $token = $this->token_store->loadToken($this);
         } catch (NoTokenStoredException $e) {
             $code = $ui->triggerUserApplicationAuthorizationFromUrl($this->getAuthURL());
             $token = $this->exchangeCodeForToken($code);
@@ -84,16 +84,27 @@ class Loader {
         return $token;
     }
 
+    public function refreshToken(Token $auth_token) : Token {
+        $url = $this->getTokenUrl();
+        $payload = $this->getTokenRefreshPayloadForToken($auth_token);
+        $request = Util\Request::post($url, $payload);
+        $response = $request->exec();
+        $token_data_as_array = $response->getJSONBody();
+        $new_token = new Token($this, $token_data_as_array);
+        $this->token_store->storeToken($new_token);
+        return $new_token;
+    }
+
     private function exchangeCodeForToken(AccessCode $code) : Token {
         $url = $this->getTokenUrlForAccessCode($code);
         $payload = $this->getTokenPayloadForAccessCode($code);
         $request = Util\Request::post($url, $payload);
         $response = $request->exec();
         $token_data_as_array = $response->getJSONBody();
-        return new Token($token_data_as_array);
+        return new Token($this, $token_data_as_array);
     }
 
-    private function getTokenUrlForAccessCode(AccessCode $code) : string {
+    private function getTokenUrl() : string {
         return $this->client_data->getTokenURI();
     }
 
@@ -101,9 +112,10 @@ class Loader {
         $payload = [
             "code"       => $code->toString(),
             "client_id"  => $this->client_data->getClientId(),
+            "client_secret" => $this->client_data->getClientSecret(),
             "scope"      => $this->scope->toString(),
             "grant_type" => "authorization_code",
-            "client_secret" => $this->client_data->getClientSecret(),
+
         ];
 
         if ($this->with_redirect) {
@@ -112,6 +124,15 @@ class Loader {
             $payload["redirect_uri"] = $this->client_data->getRedirectUri(0);
         }
         return $payload;
+    }
+
+    private function getTokenRefreshPayloadForToken(Token $token) : array {
+        return [
+            "refresh_token" => $token->getRefreshToken(),
+            "client_id"     => $this->client_data->getClientId(),
+            "client_secret" => $this->client_data->getClientSecret(),
+            "grant_type"    => "refresh_token",
+        ];
     }
 
 }

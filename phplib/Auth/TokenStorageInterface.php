@@ -3,6 +3,6 @@
 interface TokenStorageInterface {
 
     public function storeToken(Token $token);
-    public function loadToken() : Token;
+    public function loadToken(Loader $loader) : Token;
 
 }

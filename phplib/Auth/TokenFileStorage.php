@@ -8,13 +8,13 @@ class TokenFileStorage implements TokenStorageInterface {
         $this->path = $path;
     }
 
-    public function loadToken() : Token {
+    public function loadToken(Loader $loader) : Token {
         if (file_exists($this->path)) {
             $token_data_as_string = file_get_contents($this->path);
             if ($token_data_as_string) {
                 $token_data = json_decode($token_data_as_string, true);
                 if (isset($token_data['access_token'])) {
-                    return new Token($token_data);
+                    return new Token($loader, $token_data);
                 }
             }
         }

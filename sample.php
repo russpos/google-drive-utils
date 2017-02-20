@@ -12,10 +12,8 @@ $token = $loader->getTokenWithInterface($cli);
 
 print_r($token);
 $token->ensureFresh();
-/*
-$calendar_api = new Api\Calendar($token);
 
-$calendars = $calendar_api->getCalendars();
+$calendar_api = new Api\Calendar($token);
+$calendars = $calendar_api->getMyPrimaryCalendarList();
 print_r($calendars);
- */
 

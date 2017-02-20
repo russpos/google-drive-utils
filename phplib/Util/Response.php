@@ -11,6 +11,11 @@ class Response {
     }
 
     public function getJSONBody() : array {
-        return json_decode($this->body, true);
+        $returned = json_decode($this->body, true);
+
+        if (empty($returned)) {
+            echo " COULD NOT PARSE RESPONSE: \n\n{$this->body}\n\n\n";
+        }
+        return $returned;
     }
 }

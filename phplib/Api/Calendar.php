@@ -8,8 +8,12 @@ class Calendar extends Api {
         return "https://www.googleapis.com/calendar/v3";
     }
 
-    public function getCalendars() {
-        return $this->get($this->getFullUrlForPath("/calendars"));
+    public function getMyCalendarList($id = "") {
+        return $this->get($this->getFullUrlForPath("/users/me/calendarList/{$id}"));
+    }
+
+    public function getMyPrimaryCalendarList() {
+        return new Resource\Calendar($this->getMyCalendarList("primary"));
     }
 
 }
