@@ -4,23 +4,24 @@ abstract class Resource {
 
     private $data;
 
-    private static $schema;
+    protected static $schema;
 
     abstract protected static function calculateSchema();
 
     public function __construct(array $raw_data_response) {
         $this->data = $raw_data_response;
         if (empty(static::$schema)) {
+            static::$schema = [];
             static::calculateSchema();
         }
     }
 
-    protected static function hasField(string $field_name) {
-        static::$schema[] = $field_name;
+    protected static function hasField(string $field_name, Types $type) {
+        static::$schema[$field_name] = $type;
     }
 
     public function __get($field) {
-        if (!in_array($field, static::$schema)) {
+        if (empty(static::$schema[$field])) {
             $cls = get_class($this);
             throw new \Exception("Field $field not defined in schema for resource $cls");
         }

@@ -14,6 +14,7 @@ print_r($token);
 $token->ensureFresh();
 
 $calendar_api = new Api\Calendar($token);
-$calendars = $calendar_api->getMyPrimaryCalendarList();
-print_r($calendars);
+$calendar = $calendar_api->getMyPrimaryCalendarList();
+
+echo "Summary: {$calendar->summary}\n";
 
