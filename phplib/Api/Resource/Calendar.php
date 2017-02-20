@@ -13,7 +13,7 @@ class Calendar extends Api\Resource {
         static::hasField("summaryOverride", Api\Types::string());
         static::hasField("colorId", Api\Types::string());
         static::hasField("hidden", Api\Types::bool());
-        static::hasField("defaultReminders.method", Api\Types::string());
-        static::hasField("defaultReminders.minutes", Api\Types::int());
+        static::hasField("defaultReminders[].method", Api\Types::string());
+        static::hasField("defaultReminders[].minutes", Api\Types::int());
     }
 }
