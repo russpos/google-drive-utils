@@ -13,6 +13,33 @@ class Types {
         $this->type_reference = $type_reference;
     }
 
+    public function validate($value) {
+        switch ($this->type_reference) {
+        case self::TYPE_STRING:
+        case self::TYPE_INTEGER:
+            return $this->validateInt($value);
+        case self::TYPE_BOOLEAN:
+        case self::TYPE_ETAG:
+        }
+    }
+
+    public function getTypeAsString() {
+        switch ($this->type_reference) {
+        case self::TYPE_STRING:
+            return "String";
+        case self::TYPE_INTEGER:
+            return "Int";
+        case self::TYPE_BOOLEAN:
+            return "Boolean";
+        case self::TYPE_ETAG:
+            return "ETag";
+        }
+    }
+
+    private function validateInt(int $value) {
+
+    }
+
     public static function string() : Types {
         return new Types(self::TYPE_STRING);
     }
