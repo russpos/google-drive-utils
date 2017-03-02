@@ -23,7 +23,7 @@ class Token {
     }
 
     public function getRefreshToken() : string {
-        return $this->token_data["refresh_token"];
+        return (!empty($this->token_data["refresh_token"])) ? $this->token_data["refresh_token"] : "";
     }
 
     public function getTokenData() : array {

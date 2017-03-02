@@ -70,17 +70,27 @@ class Loader {
      * getTokenWithInterface
      * Returns a Token object, with user authorization happening through the provided interface
      * @param UserInterface $ui The user interface through which the authorization takes place
+     * @param boolean $allow_retry Attempt to retry authorization if token cannot be refreshed
      * @access public
      * @return Token Token data - either from the cache or fetched from the server
      */
-    public function getTokenWithInterface(UserInterface $ui) : Token {
+    public function getTokenWithInterface(UserInterface $ui, bool $allow_retry = true) : Token {
         try {
             $token = $this->token_store->loadToken($this);
         } catch (NoTokenStoredException $e) {
             $code = $ui->triggerUserApplicationAuthorizationFromUrl($this->getAuthURL());
             $token = $this->exchangeCodeForToken($code);
-            $this->token_store->storeToken($token);
+
         }
+        try {
+            $token->ensureFresh();
+        } catch (CannotRefreshTokenException $e) {
+            if ($allow_retry) {
+                return $this->getTokenWithInterface($ui, false);
+            }
+            throw $e;
+        }
+        $this->token_store->storeToken($token);
         return $token;
     }
 
@@ -96,7 +106,7 @@ class Loader {
     }
 
     private function exchangeCodeForToken(AccessCode $code) : Token {
-        $url = $this->getTokenUrlForAccessCode($code);
+        $url = $this->getTokenUrl();
         $payload = $this->getTokenPayloadForAccessCode($code);
         $request = Util\Request::post($url, $payload);
         $response = $request->exec();
@@ -127,6 +137,10 @@ class Loader {
     }
 
     private function getTokenRefreshPayloadForToken(Token $token) : array {
+        $refresh = $token->getRefreshToken();
+        if (empty($refresh)) {
+            throw new CannotRefreshTokenException();
+        }
         return [
             "refresh_token" => $token->getRefreshToken(),
             "client_id"     => $this->client_data->getClientId(),

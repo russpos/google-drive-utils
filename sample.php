@@ -10,9 +10,6 @@ $loader = new Auth\Loader($client_data, $file_storage, Auth\CalendarScope::manag
 $cli = new Auth\Cli();
 $token = $loader->getTokenWithInterface($cli);
 
-print_r($token);
-$token->ensureFresh();
-
 $calendar_api = new Api\Calendar($token);
 $calendar = $calendar_api->getMyPrimaryCalendarList();
 
